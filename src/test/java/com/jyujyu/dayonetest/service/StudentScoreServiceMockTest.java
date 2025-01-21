@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,16 +22,27 @@ import com.jyujyu.dayonetest.repository.StudentScoreRepository;
 
 class StudentScoreServiceMockTest {
 
+	private StudentScoreService studentScoreService;
+	private StudentScoreRepository studentScoreRepository;
+	private StudentPassRepository studentPassRepository;
+	private StudentFailRepository studentFailRepository;
+
+	@BeforeEach
+	void beforeEach() {
+		studentScoreRepository = Mockito.mock(StudentScoreRepository.class);
+		studentPassRepository = Mockito.mock(StudentPassRepository.class);
+		studentFailRepository = Mockito.mock(StudentFailRepository.class);
+		studentScoreService = new StudentScoreService(
+			studentScoreRepository,
+			studentPassRepository,
+			studentFailRepository
+		);
+	}
+
 	@Test
 	@DisplayName("첫 번째 Mock 테스트")
 	void firstSaveScoreMockTest() {
 		// given
-		StudentScoreService studentScoreService = new StudentScoreService(
-			Mockito.mock(StudentScoreRepository.class),
-			Mockito.mock(StudentPassRepository.class),
-			Mockito.mock(StudentFailRepository.class)
-		);
-
 		String givenStudentName = "jyujyu";
 		String givenExam = "testExam";
 		Integer givenKorScore = 80;
@@ -51,16 +63,6 @@ class StudentScoreServiceMockTest {
 	@DisplayName("성적 저장 검증 로직 / 60점 이상인 경우")
 	void saveScoreMockTest() {
 		// given : 평균 점수가 60점 이상인 경우
-		StudentScoreRepository studentScoreRepository = Mockito.mock(StudentScoreRepository.class);
-		StudentPassRepository studentPassRepository = Mockito.mock(StudentPassRepository.class);
-		StudentFailRepository studentFailRepository = Mockito.mock(StudentFailRepository.class);
-
-		StudentScoreService studentScoreService = new StudentScoreService(
-			studentScoreRepository,
-			studentPassRepository,
-			studentFailRepository
-		);
-
 		String givenStudentName = "jyujyu";
 		String givenExam = "testExam";
 		Integer givenKorScore = 80;
@@ -124,16 +126,6 @@ class StudentScoreServiceMockTest {
 	@DisplayName("성적 저장 로직 검증 / 60점 미만인 경우")
 	void saveScoreMockTest2() {
 		// given : 평균 점수가 60점 미만인 경우
-		StudentScoreRepository studentScoreRepository = Mockito.mock(StudentScoreRepository.class);
-		StudentPassRepository studentPassRepository = Mockito.mock(StudentPassRepository.class);
-		StudentFailRepository studentFailRepository = Mockito.mock(StudentFailRepository.class);
-
-		StudentScoreService studentScoreService = new StudentScoreService(
-			studentScoreRepository,
-			studentPassRepository,
-			studentFailRepository
-		);
-
 		String givenStudentName = "jyujyu";
 		String givenExam = "testExam";
 		Integer givenKorScore = 40;
@@ -185,7 +177,7 @@ class StudentScoreServiceMockTest {
 		Mockito.verify(studentPassRepository, Mockito.times(0)).save(Mockito.any());
 
 		Mockito.verify(studentFailRepository, Mockito.times(1)).save(studentFailArgumentCaptor.capture());
-		
+
 		StudentFail capturedStudentFail = studentFailArgumentCaptor.getValue();
 
 		Assertions.assertEquals(expectStudentFail.getStudentName(), capturedStudentFail.getStudentName());
@@ -197,9 +189,7 @@ class StudentScoreServiceMockTest {
 	@DisplayName("합격자 명단 가져오기 검증")
 	void getPassStudentsListTest() {
 		// given
-		StudentScoreRepository studentScoreRepository = Mockito.mock(StudentScoreRepository.class);
-		StudentPassRepository studentPassRepository = Mockito.mock(StudentPassRepository.class);
-		StudentFailRepository studentFailRepository = Mockito.mock(StudentFailRepository.class);
+		String givenTestExam = "testexam";
 
 		StudentPass expectStudent1 = StudentPass.builder()
 			.id(1L)
@@ -226,14 +216,6 @@ class StudentScoreServiceMockTest {
 			notExpectStudent3
 		));
 
-		StudentScoreService studentScoreService = new StudentScoreService(
-			studentScoreRepository,
-			studentPassRepository,
-			studentFailRepository
-		);
-
-		String givenTestExam = "testexam";
-
 		// when
 		var expectResponses = Stream.of(expectStudent1, expectStudent2)
 			.map(pass -> new ExamPassStudentResponse(pass.getStudentName(), pass.getAvgScore()))
@@ -247,9 +229,6 @@ class StudentScoreServiceMockTest {
 	@DisplayName("불합격자 명단 가져오기 검증")
 	void getFailStudentsListTest() {
 		// given
-		StudentScoreRepository studentScoreRepository = Mockito.mock(StudentScoreRepository.class);
-		StudentPassRepository studentPassRepository = Mockito.mock(StudentPassRepository.class);
-		StudentFailRepository studentFailRepository = Mockito.mock(StudentFailRepository.class);
 		String givenTestExam = "testexam";
 
 		StudentFail expectStudent1 = StudentFail.builder()
@@ -276,12 +255,6 @@ class StudentScoreServiceMockTest {
 			expectStudent2,
 			notExpectStudent3
 		));
-
-		StudentScoreService studentScoreService = new StudentScoreService(
-			studentScoreRepository,
-			studentPassRepository,
-			studentFailRepository
-		);
 
 		// when
 		var expectFailList = Stream.of(expectStudent1, expectStudent2)
