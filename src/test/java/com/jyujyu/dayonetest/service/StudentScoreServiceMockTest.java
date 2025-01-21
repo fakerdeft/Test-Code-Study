@@ -10,12 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import com.jyujyu.dayonetest.MyCalculator;
 import com.jyujyu.dayonetest.controller.response.ExamFailStudentResponse;
 import com.jyujyu.dayonetest.controller.response.ExamPassStudentResponse;
 import com.jyujyu.dayonetest.model.StudentFail;
+import com.jyujyu.dayonetest.model.StudentFailFixture;
 import com.jyujyu.dayonetest.model.StudentPass;
+import com.jyujyu.dayonetest.model.StudentPassFixture;
 import com.jyujyu.dayonetest.model.StudentScore;
+import com.jyujyu.dayonetest.model.StudentScoreFixture;
+import com.jyujyu.dayonetest.model.StudentScoreTestDataBuilder;
 import com.jyujyu.dayonetest.repository.StudentFailRepository;
 import com.jyujyu.dayonetest.repository.StudentPassRepository;
 import com.jyujyu.dayonetest.repository.StudentScoreRepository;
@@ -63,41 +66,19 @@ class StudentScoreServiceMockTest {
 	@DisplayName("성적 저장 검증 로직 / 60점 이상인 경우")
 	void saveScoreMockTest() {
 		// given : 평균 점수가 60점 이상인 경우
-		String givenStudentName = "jyujyu";
-		String givenExam = "testExam";
-		Integer givenKorScore = 80;
-		Integer givenEnglishScore = 100;
-		Integer givenMathScore = 60;
-
-		StudentScore expectStudentScore = StudentScore.builder()
-			.studentName(givenStudentName)
-			.exam(givenExam)
-			.korScore(givenKorScore)
-			.englishScore(givenEnglishScore)
-			.mathScore(givenMathScore)
-			.build();
-
-		StudentPass expectStudentPass = StudentPass.builder()
-			.studentName(givenStudentName)
-			.exam(givenExam)
-			.avgScore((new MyCalculator(0.0))
-				.add(givenKorScore.doubleValue())
-				.add(givenEnglishScore.doubleValue())
-				.add(givenMathScore.doubleValue())
-				.divide(3.0)
-				.getResult())
-			.build();
+		StudentScore expectStudentScore = StudentScoreTestDataBuilder.passed().build();
+		StudentPass expectStudentPass = StudentPassFixture.create(expectStudentScore);
 
 		ArgumentCaptor<StudentScore> studentScoreArgumentCaptor = ArgumentCaptor.forClass(StudentScore.class);
 		ArgumentCaptor<StudentPass> studentPassArgumentCaptor = ArgumentCaptor.forClass(StudentPass.class);
 
 		// when
 		studentScoreService.saveScore(
-			givenExam,
-			givenStudentName,
-			givenKorScore,
-			givenEnglishScore,
-			givenMathScore
+			expectStudentScore.getExam(),
+			expectStudentScore.getStudentName(),
+			expectStudentScore.getKorScore(),
+			expectStudentScore.getEnglishScore(),
+			expectStudentScore.getMathScore()
 		);
 
 		// then
@@ -126,41 +107,19 @@ class StudentScoreServiceMockTest {
 	@DisplayName("성적 저장 로직 검증 / 60점 미만인 경우")
 	void saveScoreMockTest2() {
 		// given : 평균 점수가 60점 미만인 경우
-		String givenStudentName = "jyujyu";
-		String givenExam = "testExam";
-		Integer givenKorScore = 40;
-		Integer givenEnglishScore = 40;
-		Integer givenMathScore = 60;
-
-		StudentScore expectStudentScore = StudentScore.builder()
-			.studentName(givenStudentName)
-			.exam(givenExam)
-			.korScore(givenKorScore)
-			.englishScore(givenEnglishScore)
-			.mathScore(givenMathScore)
-			.build();
-
-		StudentFail expectStudentFail = StudentFail.builder()
-			.studentName(givenStudentName)
-			.exam(givenExam)
-			.avgScore((new MyCalculator(0.0)
-				.add(givenKorScore.doubleValue())
-				.add(givenEnglishScore.doubleValue()))
-				.add(givenMathScore.doubleValue())
-				.divide(3.0)
-				.getResult())
-			.build();
+		StudentScore expectStudentScore = StudentScoreFixture.failed();
+		StudentFail expectStudentFail = StudentFailFixture.create(expectStudentScore);
 
 		ArgumentCaptor<StudentScore> studentScoreArgumentCaptor = ArgumentCaptor.forClass(StudentScore.class);
 		ArgumentCaptor<StudentFail> studentFailArgumentCaptor = ArgumentCaptor.forClass(StudentFail.class);
 
 		// when
 		studentScoreService.saveScore(
-			givenExam,
-			givenStudentName,
-			givenKorScore,
-			givenEnglishScore,
-			givenMathScore
+			expectStudentScore.getExam(),
+			expectStudentScore.getStudentName(),
+			expectStudentScore.getKorScore(),
+			expectStudentScore.getEnglishScore(),
+			expectStudentScore.getMathScore()
 		);
 
 		// then
@@ -190,25 +149,9 @@ class StudentScoreServiceMockTest {
 	void getPassStudentsListTest() {
 		// given
 		String givenTestExam = "testexam";
-
-		StudentPass expectStudent1 = StudentPass.builder()
-			.id(1L)
-			.studentName("jyujyu")
-			.exam("testexam")
-			.avgScore(70.0)
-			.build();
-		StudentPass expectStudent2 = StudentPass.builder()
-			.id(2L)
-			.studentName("test")
-			.exam("testexam")
-			.avgScore(80.0)
-			.build();
-		StudentPass notExpectStudent3 = StudentPass.builder()
-			.id(3L)
-			.studentName("iamnot")
-			.exam("secondexam")
-			.avgScore(90.0)
-			.build();
+		StudentPass expectStudent1 = StudentPassFixture.create("jyujyu", givenTestExam);
+		StudentPass expectStudent2 = StudentPassFixture.create("testName", givenTestExam);
+		StudentPass notExpectStudent3 = StudentPassFixture.create("anotherStudent", "anotherExam");
 
 		Mockito.when(studentPassRepository.findAll()).thenReturn(List.of(
 			expectStudent1,
@@ -230,25 +173,9 @@ class StudentScoreServiceMockTest {
 	void getFailStudentsListTest() {
 		// given
 		String givenTestExam = "testexam";
-
-		StudentFail expectStudent1 = StudentFail.builder()
-			.id(1L)
-			.studentName("jyujyu")
-			.exam(givenTestExam)
-			.avgScore(50.0)
-			.build();
-		StudentFail expectStudent2 = StudentFail.builder()
-			.id(2L)
-			.studentName("test")
-			.exam(givenTestExam)
-			.avgScore(45.0)
-			.build();
-		StudentFail notExpectStudent3 = StudentFail.builder()
-			.id(3L)
-			.studentName("iamnot")
-			.exam("secondexam")
-			.avgScore(35.0)
-			.build();
+		StudentFail expectStudent1 = StudentFailFixture.create("testName", givenTestExam);
+		StudentFail expectStudent2 = StudentFailFixture.create("textName2", givenTestExam);
+		StudentFail notExpectStudent3 = StudentFailFixture.create("anotherStudent", "anotherExam");
 
 		Mockito.when(studentFailRepository.findAll()).thenReturn(List.of(
 			expectStudent1,
