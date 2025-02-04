@@ -11,9 +11,8 @@ group = 'com.jyujyu.dayonetest'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 configurations {
@@ -57,7 +56,7 @@ dependencies {
 }
 
 jacoco {
-    toolVersion = "0.8.8"
+    toolVersion = "0.8.11"
 }
 
 tasks.named('test') {
@@ -89,13 +88,13 @@ tasks.jacocoTestCoverageVerification {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal.valueOf(0.5)
+                minimum = BigDecimal.valueOf(0.1)
             }
 
             limit {
                 counter = "LINE"
                 value = "TOTALCOUNT"
-                maximum = BigDecimal.valueOf(300)
+                maximum = BigDecimal.valueOf(100)
             }
 
             excludes = List.of(

@@ -3,12 +3,16 @@ package com.jyujyu.dayonetest;
 import com.jyujyu.dayonetest.service.KafkaConsumerService;
 import com.jyujyu.dayonetest.service.KafkaProducerService;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+@Order(0)
+@DirtiesContext
 class KafkaConsumerApplicationTests extends IntegrationTest {
 
   @Autowired private KafkaProducerService kafkaProducerService;
