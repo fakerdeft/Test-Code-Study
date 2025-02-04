@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
+    id 'org.sonarqube' version '4.0.0.2929'
 }
 
 group = 'com.jyujyu.dayonetest'
@@ -53,6 +55,66 @@ dependencies {
     testImplementation 'com.tngtech.archunit:archunit:1.1.0'
 }
 
+jacoco {
+    toolVersion = "0.8.8"
+}
+
 tasks.named('test') {
     useJUnitPlatform()
+
+    jacoco {}
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+
+        xml.destination(file("build/jacoco/jacoco.xml"))
+        html.destination(file("build/jacoco/jacoco.html"))
+    }
+
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            enabled = true
+            element = "CLASS"
+
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = BigDecimal.valueOf(0.5)
+            }
+
+            limit {
+                counter = "LINE"
+                value = "TOTALCOUNT"
+                maximum = BigDecimal.valueOf(300)
+            }
+
+            excludes = List.of(
+                    "*.controller.*",
+                    "com.jyujyu.dayonetest.MyCalculatorApplication",
+                    "com.jyujyu.dayonetest.DayonetestApplication",
+            )
+        }
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.host.url", "http://localhost:9000")
+        property("sonar.login", "sqp_8a1c0328bd67ecb83d38baaaf06a2cab9771b76d")
+        property("sonar.sources", "src/main/java")
+        property("sonar.tests", "src/test/java")
+        property("sonar.sourceEncoding", "UTF-8")
+        property("sonar.projectKey", "dayonetest")
+        property("sonar.projectName", "dayonetest")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/jacoco/jacoco.xml")
+    }
 }
