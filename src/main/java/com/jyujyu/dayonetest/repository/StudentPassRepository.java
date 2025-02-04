@@ -1,9 +1,6 @@
 package com.jyujyu.dayonetest.repository;
 
+import com.jyujyu.dayonetest.model.StudentPass;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.jyujyu.dayonetest.model.StudentPass;
-
-public interface StudentPassRepository extends JpaRepository<StudentPass, Long> {
-
-}
+public interface StudentPassRepository extends JpaRepository<StudentPass, Long> {}

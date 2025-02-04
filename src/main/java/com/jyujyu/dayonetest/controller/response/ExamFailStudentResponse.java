@@ -9,6 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class ExamFailStudentResponse {
 
-	private final String studentName;
-	private final Double avgScore;
+  private final String studentName;
+  private final Double avgScore;
 }
