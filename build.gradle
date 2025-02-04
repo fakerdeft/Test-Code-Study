@@ -46,6 +46,9 @@ dependencies {
     implementation("software.amazon.awssdk:sts")
     implementation("software.amazon.awssdk:s3")
     testImplementation("org.testcontainers:localstack:1.19.0")
+
+    implementation("org.springframework.kafka:spring-kafka")
+    testImplementation("org.testcontainers:kafka:1.19.0")
 }
 
 tasks.named('test') {
