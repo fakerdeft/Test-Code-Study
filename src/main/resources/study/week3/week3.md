@@ -99,78 +99,78 @@ class StudentScoreServiceIntegrationTest extends IntegrationTest {
 
 	@Test
 	void savePassedStudentScoreTest() {
-		// given
-		var studentScore = StudentScoreFixture.passed();
-
-		// when
-		studentScoreService.saveScore(
-			studentScore.getExam(),
-			studentScore.getStudentName(),
-			studentScore.getKorScore(),
-			studentScore.getEnglishScore(),
-			studentScore.getMathScore()
-		);
-
-		entityManager.flush();
-		entityManager.clear();
-
-		// then
-		var passedStudentResponses = studentScoreService.getPassStudentsList(studentScore.getExam());
-
-		Assertions.assertEquals(1, passedStudentResponses.size());
-
-		var passedStudentResponse = passedStudentResponses.get(0);
-
-		var calculator = new MyCalculator(0.0);
-
-		Assertions.assertEquals(studentScore.getStudentName(), passedStudentResponse.getStudentName());
-		Assertions.assertEquals(
-			calculator
-				.add(studentScore.getKorScore().doubleValue())
-				.add(studentScore.getEnglishScore().doubleValue())
-				.add(studentScore.getMathScore().doubleValue())
-				.divide(3.0)
-				.getResult(),
-			passedStudentResponse.getAvgScore()
-		);
+            // given
+            var studentScore = StudentScoreFixture.passed();
+        
+            // when
+            studentScoreService.saveScore(
+                studentScore.getExam(),
+                studentScore.getStudentName(),
+                studentScore.getKorScore(),
+                studentScore.getEnglishScore(),
+                studentScore.getMathScore()
+            );
+        
+            entityManager.flush();
+            entityManager.clear();
+        
+            // then
+            var passedStudentResponses = studentScoreService.getPassStudentsList(studentScore.getExam());
+        
+            Assertions.assertEquals(1, passedStudentResponses.size());
+        
+            var passedStudentResponse = passedStudentResponses.get(0);
+        
+            var calculator = new MyCalculator(0.0);
+        
+            Assertions.assertEquals(studentScore.getStudentName(), passedStudentResponse.getStudentName());
+            Assertions.assertEquals(
+                calculator
+                    .add(studentScore.getKorScore().doubleValue())
+                    .add(studentScore.getEnglishScore().doubleValue())
+                    .add(studentScore.getMathScore().doubleValue())
+                    .divide(3.0)
+                    .getResult(),
+                passedStudentResponse.getAvgScore()
+            );
 	}
 
 	@Test
 	void saveFailedStudentScoreTest() {
-		// given
-		var studentScore = StudentScoreFixture.failed();
-
-		// when
-		studentScoreService.saveScore(
-			studentScore.getExam(),
-			studentScore.getStudentName(),
-			studentScore.getKorScore(),
-			studentScore.getEnglishScore(),
-			studentScore.getMathScore()
-		);
-
-		entityManager.flush();
-		entityManager.clear();
-
-		// then
-		var failedStudentResponses = studentScoreService.getFailStudentsList(studentScore.getExam());
-
-		Assertions.assertEquals(1, failedStudentResponses.size());
-
-		var failedStudentResponse = failedStudentResponses.get(0);
-
-		var calculator = new MyCalculator(0.0);
-
-		Assertions.assertEquals(studentScore.getStudentName(), failedStudentResponse.getStudentName());
-		Assertions.assertEquals(
-			calculator
-				.add(studentScore.getKorScore().doubleValue())
-				.add(studentScore.getEnglishScore().doubleValue())
-				.add(studentScore.getMathScore().doubleValue())
-				.divide(3.0)
-				.getResult(),
-			failedStudentResponse.getAvgScore()
-		);
+            // given
+            var studentScore = StudentScoreFixture.failed();
+        
+            // when
+            studentScoreService.saveScore(
+                studentScore.getExam(),
+                studentScore.getStudentName(),
+                studentScore.getKorScore(),
+                studentScore.getEnglishScore(),
+                studentScore.getMathScore()
+            );
+        
+            entityManager.flush();
+            entityManager.clear();
+        
+            // then
+            var failedStudentResponses = studentScoreService.getFailStudentsList(studentScore.getExam());
+        
+            Assertions.assertEquals(1, failedStudentResponses.size());
+        
+            var failedStudentResponse = failedStudentResponses.get(0);
+        
+            var calculator = new MyCalculator(0.0);
+        
+            Assertions.assertEquals(studentScore.getStudentName(), failedStudentResponse.getStudentName());
+            Assertions.assertEquals(
+                calculator
+                    .add(studentScore.getKorScore().doubleValue())
+                    .add(studentScore.getEnglishScore().doubleValue())
+                    .add(studentScore.getMathScore().doubleValue())
+                    .divide(3.0)
+                    .getResult(),
+                failedStudentResponse.getAvgScore()
+            );
 	}
 }
 ```
@@ -189,51 +189,51 @@ public class IntegrationTest {
 	static DockerComposeContainer rdbms;
 	static RedisContainer redis;
 
-	static {
-		rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
-			.withExposedService(
-				"local-db",
-				3306,
-				Wait.forLogMessage(".*ready for connections.*", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			)
-			.withExposedService(
-				"local-db-migrate",
-				0,
-				Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			);
-
-		rdbms.start();
-
-        // Redis 컨테이너 세팅 및 시작
-		redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
-		redis.start();
-	}
-
-	static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-		@Override
-		public void initialize(ConfigurableApplicationContext applicationContext) {
-			Map<String, String> properties = new HashMap<>();
-
-			var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
-			var rdbmsPort = rdbms.getServicePort("local-db", 3306);
-
-			properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
-
-            // Docker 컨테이너에서 실행 중인 Redis의 호스트와 포트 정보 가져오기
-			var redisHost = redis.getHost();
-			var redisPort = redis.getFirstMappedPort();
-
-            // Redis Host, Port 추가
-			properties.put("spring.datasource.redis.host", redisHost);
-			properties.put("spring.datasource.redis.port", redisPort.toString());
-
-			TestPropertyValues.of(properties)
-				.applyTo(applicationContext);
-		}
-	}
+        static {
+            rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
+                .withExposedService(
+                    "local-db",
+                    3306,
+                    Wait.forLogMessage(".*ready for connections.*", 1)
+                        .withStartupTimeout(Duration.ofSeconds(300))
+                )
+                .withExposedService(
+                    "local-db-migrate",
+                    0,
+                    Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
+                        .withStartupTimeout(Duration.ofSeconds(300))
+                );
+        
+            rdbms.start();
+        
+            // Redis 컨테이너 세팅 및 시작
+            redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
+            redis.start();
+        }
+        
+        static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        
+            @Override
+            public void initialize(ConfigurableApplicationContext applicationContext) {
+                Map<String, String> properties = new HashMap<>();
+        
+                var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
+                var rdbmsPort = rdbms.getServicePort("local-db", 3306);
+        
+                properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
+        
+                // Docker 컨테이너에서 실행 중인 Redis의 호스트와 포트 정보 가져오기
+                var redisHost = redis.getHost();
+                var redisPort = redis.getFirstMappedPort();
+        
+                // Redis Host, Port 추가
+                properties.put("spring.datasource.redis.host", redisHost);
+                properties.put("spring.datasource.redis.port", redisPort.toString());
+        
+                TestPropertyValues.of(properties)
+                    .applyTo(applicationContext);
+            }
+        }
 }
 ```
 
@@ -248,17 +248,17 @@ class RedisServiceTest extends IntegrationTest {
 	@Test
 	@DisplayName("Redis Get / Set 테스트")
 	void redisGetSetTest() {
-		// given
-		String expectValue = "hello";
-		String key = "hi";
-
-		// when
-		redisService.set(key, expectValue);
-
-		// then
-		String actualValue = redisService.get(key);
-
-		Assertions.assertEquals(expectValue, actualValue);
+            // given
+            String expectValue = "hello";
+            String key = "hi";
+        
+            // when
+            redisService.set(key, expectValue);
+        
+            // then
+            String actualValue = redisService.get(key);
+        
+            Assertions.assertEquals(expectValue, actualValue);
 	}
 }
 ```
@@ -274,33 +274,33 @@ class RedisServiceTest extends IntegrationTest {
 @ContextConfiguration(initializers = IntegrationTest.IntegrationTestInitializer.class)
 public class IntegrationTest {
 
-	static DockerComposeContainer rdbms;
-
-	static RedisContainer redis;
-
-	static LocalStackContainer aws;
-
-	static {
-		rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
-			.withExposedService(
-				"local-db",
-				3306,
-				Wait.forLogMessage(".*ready for connections.*", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			)
-			.withExposedService(
-				"local-db-migrate",
-				0,
-				Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			);
-
-		rdbms.start();
-
-		redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
-		redis.start();
-
-		// LocalStack 이미지 버전 지정 (0.11.2 버전 사용)
+    static DockerComposeContainer rdbms;
+    
+    static RedisContainer redis;
+    
+    static LocalStackContainer aws;
+    
+    static {
+        rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
+            .withExposedService(
+                "local-db",
+                3306,
+                Wait.forLogMessage(".*ready for connections.*", 1)
+                    .withStartupTimeout(Duration.ofSeconds(300))
+            )
+            .withExposedService(
+                "local-db-migrate",
+                0,
+                Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
+                    .withStartupTimeout(Duration.ofSeconds(300))
+            );
+    
+        rdbms.start();
+    
+        redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
+        redis.start();
+    
+        // LocalStack 이미지 버전 지정 (0.11.2 버전 사용)
         DockerImageName imageName = DockerImageName.parse("localstack/localstack:0.11.2");
         
         // LocalStack 컨테이너 설정
@@ -312,26 +312,26 @@ public class IntegrationTest {
         
         // LocalStack 컨테이너 시작
         aws.start();
-	}
-
-	static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-		@Override
-		public void initialize(ConfigurableApplicationContext applicationContext) {
-			Map<String, String> properties = new HashMap<>();
-
-			var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
-			var rdbmsPort = rdbms.getServicePort("local-db", 3306);
-
-			properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
-
-			var redisHost = redis.getHost();
-			var redisPort = redis.getFirstMappedPort();
-
-			properties.put("spring.datasource.redis.host", redisHost);
-			properties.put("spring.datasource.redis.port", redisPort.toString());
-
-			 try {
+    }
+    
+    static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            Map<String, String> properties = new HashMap<>();
+    
+            var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
+            var rdbmsPort = rdbms.getServicePort("local-db", 3306);
+    
+            properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
+    
+            var redisHost = redis.getHost();
+            var redisPort = redis.getFirstMappedPort();
+    
+            properties.put("spring.datasource.redis.host", redisHost);
+            properties.put("spring.datasource.redis.port", redisPort.toString());
+    
+             try {
                 // LocalStack 컨테이너 내부에서 S3 버킷 생성 명령 실행
                 aws.execInContainer(
                     "awslocal",          // LocalStack용 AWS CLI 도구
@@ -340,17 +340,17 @@ public class IntegrationTest {
                     "--bucket",          // 버킷 이름 옵션
                     "test-bucket"        // 생성할 버킷 이름
                 );
-
+    
                 // LocalStack의 엔드포인트를 스프링 설정에 추가
-				properties.put("aws.endpoint", aws.getEndpoint().toString());
-			} catch (Exception e) {
-				// ignore
-			}
-
-			TestPropertyValues.of(properties)
-				.applyTo(applicationContext);
-		}
-	}
+                properties.put("aws.endpoint", aws.getEndpoint().toString());
+            } catch (Exception e) {
+                // ignore
+            }
+    
+            TestPropertyValues.of(properties)
+                .applyTo(applicationContext);
+        }
+    }
 }
 ```
 
@@ -359,27 +359,27 @@ public class IntegrationTest {
 ```
 class S3ServiceTest extends IntegrationTest {
 
-	@Autowired
-	private S3Service s3Service;
-
-	@Test
-	void s3PutAndGetTest() throws IOException {
-		// given
-		var bucket = "test-bucket";
-		var key = "sampleObject.xt";
-		var sampleFile = new ClassPathResource("static/sample.txt").getFile();
-
-		// when
-		s3Service.putFile(bucket, key, sampleFile);
-
-		// then
-		var resultfile = s3Service.getFile(bucket, key);
-
-		List<String> sampleFileLines = FileUtils.readLines(sampleFile);
-		List<String> resultFileLines = FileUtils.readLines(resultfile);
-
-		Assertions.assertIterableEquals(sampleFileLines, resultFileLines);
-	}
+    @Autowired
+    private S3Service s3Service;
+    
+    @Test
+    void s3PutAndGetTest() throws IOException {
+        // given
+        var bucket = "test-bucket";
+        var key = "sampleObject.xt";
+        var sampleFile = new ClassPathResource("static/sample.txt").getFile();
+    
+        // when
+        s3Service.putFile(bucket, key, sampleFile);
+    
+        // then
+        var resultfile = s3Service.getFile(bucket, key);
+    
+        List<String> sampleFileLines = FileUtils.readLines(sampleFile);
+        List<String> resultFileLines = FileUtils.readLines(resultfile);
+    
+        Assertions.assertIterableEquals(sampleFileLines, resultFileLines);
+    }
 }
 ```
 
@@ -394,41 +394,41 @@ class S3ServiceTest extends IntegrationTest {
 @ContextConfiguration(initializers = IntegrationTest.IntegrationTestInitializer.class)
 public class IntegrationTest {
 
-	static DockerComposeContainer rdbms;
-
-	static RedisContainer redis;
-
-	static LocalStackContainer aws;
-
-	static KafkaContainer kafka;
-
-	static {
-		rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
-			.withExposedService(
-				"local-db",
-				3306,
-				Wait.forLogMessage(".*ready for connections.*", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			)
-			.withExposedService(
-				"local-db-migrate",
-				0,
-				Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
-					.withStartupTimeout(Duration.ofSeconds(300))
-			);
-
-		rdbms.start();
-
-		redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
-		redis.start();
-
-		DockerImageName imageName = DockerImageName.parse("localstack/localstack:0.11.2");
-		aws = (new LocalStackContainer(imageName))
-			.withServices(LocalStackContainer.Service.S3)
-			.withStartupTimeout(Duration.ofSeconds(600));
-		aws.start();
-
-		// Kafka 컨테이너 초기화
+    static DockerComposeContainer rdbms;
+    
+    static RedisContainer redis;
+    
+    static LocalStackContainer aws;
+    
+    static KafkaContainer kafka;
+    
+    static {
+        rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
+            .withExposedService(
+                "local-db",
+                3306,
+                Wait.forLogMessage(".*ready for connections.*", 1)
+                    .withStartupTimeout(Duration.ofSeconds(300))
+            )
+            .withExposedService(
+                "local-db-migrate",
+                0,
+                Wait.forLogMessage("(.*Successfully applied.*)|(.*Successfully validated.*)", 1)
+                    .withStartupTimeout(Duration.ofSeconds(300))
+            );
+    
+        rdbms.start();
+    
+        redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
+        redis.start();
+    
+        DockerImageName imageName = DockerImageName.parse("localstack/localstack:0.11.2");
+        aws = (new LocalStackContainer(imageName))
+            .withServices(LocalStackContainer.Service.S3)
+            .withStartupTimeout(Duration.ofSeconds(600));
+        aws.start();
+    
+        // Kafka 컨테이너 초기화
         kafka = new KafkaContainer(
             // Confluent Platform Kafka 이미지 사용 (버전 7.5.0)
             DockerImageName.parse("confluentinc/cp-kafka:7.5.0"))
@@ -438,47 +438,47 @@ public class IntegrationTest {
         
         // Kafka 컨테이너 시작
         kafka.start();
-	}
-
-	static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-		@Override
-		public void initialize(ConfigurableApplicationContext applicationContext) {
-			Map<String, String> properties = new HashMap<>();
-
-			var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
-			var rdbmsPort = rdbms.getServicePort("local-db", 3306);
-
-			properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
-
-			var redisHost = redis.getHost();
-			var redisPort = redis.getFirstMappedPort();
-
-			properties.put("spring.datasource.redis.host", redisHost);
-			properties.put("spring.datasource.redis.port", redisPort.toString());
-
-			try {
-				aws.execInContainer(
-					"awslocal",
-					"s3api",
-					"create-bucket",
-					"--bucket",
-					"test-bucket"
-				);
-
-				properties.put("aws.endpoint", aws.getEndpoint().toString());
-			} catch (Exception e) {
-				// ignore
-			}
-
-			// Kafka 브로커 주소를 스프링 설정에 추가
+    }
+    
+    static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+    
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            Map<String, String> properties = new HashMap<>();
+    
+            var rdbmsHost = rdbms.getServiceHost("local-db", 3306);
+            var rdbmsPort = rdbms.getServicePort("local-db", 3306);
+    
+            properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
+    
+            var redisHost = redis.getHost();
+            var redisPort = redis.getFirstMappedPort();
+    
+            properties.put("spring.datasource.redis.host", redisHost);
+            properties.put("spring.datasource.redis.port", redisPort.toString());
+    
+            try {
+                aws.execInContainer(
+                    "awslocal",
+                    "s3api",
+                    "create-bucket",
+                    "--bucket",
+                    "test-bucket"
+                );
+    
+                properties.put("aws.endpoint", aws.getEndpoint().toString());
+            } catch (Exception e) {
+                // ignore
+            }
+    
+            // Kafka 브로커 주소를 스프링 설정에 추가
             // getBootstrapServers()는 Kafka 브로커의 호스트:포트 형식의 접속 정보를 반환
             properties.put("spring.kafka.bootstrap-servers", kafka.getBootstrapServers());
-
-			TestPropertyValues.of(properties)
-				.applyTo(applicationContext);
-		}
-	}
+    
+            TestPropertyValues.of(properties)
+                .applyTo(applicationContext);
+        }
+    }
 }
 ```
 
@@ -487,33 +487,33 @@ public class IntegrationTest {
 ```
 class KafkaConsumerApplicationTests extends IntegrationTest {
 
-	@Autowired
-	private KafkaProducerService kafkaProducerService;
-
-	@MockitoBean
-	private KafkaConsumerService kafkaConsumerService;
-
-	@Test
-	void kafkaSendAndConsumeTest() {
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+    
+    @MockitoBean
+    private KafkaConsumerService kafkaConsumerService;
+    
+    @Test
+    void kafkaSendAndConsumeTest() {
         // given
-		String topic = "test-topic";
-		String expectValue = "expect-value";
-
-		// when
-		kafkaProducerService.send(topic, expectValue);
-
-		// then
-		// Consumer가 받은 메시지를 캡처하기 위한 ArgumentCaptor 생성
-		var stringCaptor = ArgumentCaptor.forClass(String.class);
-
-		// Consumer의 process 메서드 호출 검증
-		// timeout(5000): 최대 5초 동안 대기
-		// times(1): 정확히 1번 호출되었는지 확인
-		Mockito.verify(kafkaConsumerService, Mockito.timeout(5000).times(1))
-			.process(stringCaptor.capture());
-
-		Assertions.assertEquals(expectValue, stringCaptor.getValue());
-	}
+        String topic = "test-topic";
+        String expectValue = "expect-value";
+    
+        // when
+        kafkaProducerService.send(topic, expectValue);
+    
+        // then
+        // Consumer가 받은 메시지를 캡처하기 위한 ArgumentCaptor 생성
+        var stringCaptor = ArgumentCaptor.forClass(String.class);
+    
+        // Consumer의 process 메서드 호출 검증
+        // timeout(5000): 최대 5초 동안 대기
+        // times(1): 정확히 1번 호출되었는지 확인
+        Mockito.verify(kafkaConsumerService, Mockito.timeout(5000).times(1))
+            .process(stringCaptor.capture());
+    
+        Assertions.assertEquals(expectValue, stringCaptor.getValue());
+    }
 }
 ```
 
