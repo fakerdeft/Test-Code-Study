@@ -49,6 +49,8 @@ dependencies {
 
     implementation("org.springframework.kafka:spring-kafka")
     testImplementation("org.testcontainers:kafka:1.19.0")
+
+    testImplementation 'com.tngtech.archunit:archunit:1.1.0'
 }
 
 tasks.named('test') {

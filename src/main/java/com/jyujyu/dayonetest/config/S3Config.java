@@ -1,4 +1,4 @@
-package com.jyujyu.dayonetest.service;
+package com.jyujyu.dayonetest.config;
 
 import java.net.URI;
 import java.util.List;
