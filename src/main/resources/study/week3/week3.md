@@ -9,6 +9,9 @@
 - Spring Data JPA
 - MySQL 8.0
 - Flyway
+- Redis
+- AWS S3
+- Kafka
 
 ### ✅ 통합 테스트
 
