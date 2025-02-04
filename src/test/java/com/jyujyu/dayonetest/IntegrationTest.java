@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.DockerComposeContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
+import com.redis.testcontainers.RedisContainer;
+
 @Ignore
 @Transactional
 @SpringBootTest
@@ -22,9 +24,10 @@ import org.testcontainers.containers.wait.strategy.Wait;
 public class IntegrationTest {
 
 	static DockerComposeContainer rdbms;
+	static RedisContainer redis;
 
 	static {
-		rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yaml"))
+		rdbms = new DockerComposeContainer(new File("infra/test/docker-compose.yml"))
 			.withExposedService(
 				"local-db",
 				3306,
@@ -39,6 +42,9 @@ public class IntegrationTest {
 			);
 
 		rdbms.start();
+
+		redis = new RedisContainer(RedisContainer.DEFAULT_IMAGE_NAME.withTag("6"));
+		redis.start();
 	}
 
 	static class IntegrationTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -51,6 +57,13 @@ public class IntegrationTest {
 			var rdbmsPort = rdbms.getServicePort("local-db", 3306);
 
 			properties.put("spring.datasource.url", "jdbc:mysql://" + rdbmsHost + ":" + rdbmsPort + "/score");
+
+			var redisHost = redis.getHost();
+			var redisPort = redis.getFirstMappedPort();
+
+			properties.put("spring.datasource.redis.host", redisHost);
+			properties.put("spring.datasource.redis.port", redisPort.toString());
+
 			TestPropertyValues.of(properties)
 				.applyTo(applicationContext);
 		}
